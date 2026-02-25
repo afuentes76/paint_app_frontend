@@ -1,9 +1,11 @@
+// src/app/login/page.tsx
 "use client";
 
 // src/app/login/page.tsx
 
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 import { setAuth } from "@/lib/auth";
 
@@ -60,15 +62,17 @@ export default function LoginPage() {
 
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
-          setErrorMsg("Invalid email or password");
+          setErrorMsg(res.status === 403 ? "Account is not enabled yet" : "Invalid email or password");
+        } else if (res.status === 500) {
+          setErrorMsg("Server error occurred during login. Please check server logs.");
         } else {
           setErrorMsg("Login failed");
-          try {
-            const raw = await res.text();
-            console.error("Login error response:", res.status, raw);
-          } catch (err) {
-            console.error("Login error response read failed:", err);
-          }
+        }
+        try {
+          const raw = await res.text();
+          console.error("Login error response:", res.status, raw);
+        } catch (err) {
+          console.error("Login error response read failed:", err);
         }
         return;
       }
@@ -134,6 +138,12 @@ export default function LoginPage() {
                     {loading ? "Logging in..." : "Login"}
                 </Button>
             </form>
+
+            <div className="mt-6 text-sm opacity-80">
+              <Link href="/register" className="underline hover:opacity-80">
+                Create account
+              </Link>
+            </div>
           </div>
         </Card>
       </div>

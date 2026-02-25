@@ -37,6 +37,6 @@ export function TR({ children }: { children: React.ReactNode }) {
   return <tr className={cn("border-b last:border-b-0", theme.color.border)}>{children}</tr>;
 }
 
-export function TD({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <td className={cn("px-3 py-2", className)}>{children}</td>;
+export function TD({ children, className, colSpan }: { children: React.ReactNode; className?: string; colSpan?: number }) {
+  return <td className={cn("px-3 py-2", className)} colSpan={colSpan}>{children}</td>;
 }

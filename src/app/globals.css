@@ -9,9 +9,9 @@
 
 :root {
   /* Colors */
-  --color-background: #ffffff;
-  --color-surface: #f8fafc; /* very light gray */
-  --color-surface-2: #f1f5f9; /* light gray */
+  --color-background: #f3f6fb;   /* page background */
+  --color-surface: #ffffff;      /* cards / panels */
+  --color-surface-2: #f8fafc;    /* inputs / subtle sections */
   --color-border: #e2e8f0; /* gray border */
   --color-text: #0f172a; /* near-black slate */
   --color-muted-text: #475569; /* muted slate */
@@ -52,4 +52,250 @@ body {
 * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+
+@layer components {
+  .form-container {
+    max-width: var(--form-max);
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Theme presets                                                              */
+/* Switch by setting: <html data-theme="modern">                              */
+/* -------------------------------------------------------------------------- */
+
+/* A) Modern Tech (Stripe/Linear-ish) */
+:root[data-theme="modern"] {
+  --color-background: #0b1220;
+  --color-surface: #0f1b2d;
+  --color-surface-2: #13233a;
+  --color-border: rgba(148, 163, 184, 0.18);
+  --color-text: #e6edf6;
+  --color-muted-text: rgba(230, 237, 246, 0.7);
+
+  --color-primary: #6ea8ff;
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-danger: #fb7185;
+
+  --color-ring: rgba(110, 168, 255, 0.55);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.28);
+  --shadow-md: 0 18px 45px rgba(0, 0, 0, 0.35);
+}
+
+/* B) Clean Minimal (Apple/Notion light) */
+:root[data-theme="minimal"] {
+  --color-background: #ffffff;
+  --color-surface: #f6f7f9;
+  --color-surface-2: #ffffff;
+  --color-border: #e6e8ee;
+  --color-text: #111827;
+  --color-muted-text: #6b7280;
+
+  --color-primary: #111827;
+  --color-success: #059669;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+
+  --color-ring: rgba(17, 24, 39, 0.25);
+
+  --shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.06);
+  --shadow-md: 0 12px 28px rgba(17, 24, 39, 0.10);
+}
+
+/* C) Friendly Consumer (Canva-ish) */
+:root[data-theme="friendly"] {
+  --color-background: #fbfbfe;
+  --color-surface: #ffffff;
+  --color-surface-2: #f3f4ff;
+  --color-border: #e7e7ff;
+  --color-text: #17172a;
+  --color-muted-text: #6b6b85;
+
+  --color-primary: #6d5efc;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  --color-ring: rgba(109, 94, 252, 0.35);
+
+  --shadow-sm: 0 1px 2px rgba(23, 23, 42, 0.06);
+  --shadow-md: 0 14px 34px rgba(23, 23, 42, 0.10);
+}
+
+/* D) Contractor / Practical (high contrast, sturdy) */
+:root[data-theme="contractor"] {
+  --color-background: #0f1115;
+  --color-surface: #151922;
+  --color-surface-2: #1b2230;
+  --color-border: rgba(226, 232, 240, 0.18);
+  --color-text: #f1f5f9;
+  --color-muted-text: rgba(241, 245, 249, 0.75);
+
+  --color-primary: #f59e0b;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+
+  --color-ring: rgba(245, 158, 11, 0.45);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 18px 45px rgba(0, 0, 0, 0.40);
+}
+
+/* E) Premium (soft neutrals + elegant accent) */
+:root[data-theme="premium"] {
+  --color-background: #0b0b0f;
+  --color-surface: #12121a;
+  --color-surface-2: #161625;
+  --color-border: rgba(255, 255, 255, 0.10);
+  --color-text: #f5f5f7;
+  --color-muted-text: rgba(245, 245, 247, 0.72);
+
+  --color-primary: #d6b15e;
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-danger: #fb7185;
+
+  --color-ring: rgba(214, 177, 94, 0.40);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30);
+  --shadow-md: 0 18px 55px rgba(0, 0, 0, 0.45);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+@layer base {
+  html {
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+      "Apple Color Emoji", "Segoe UI Emoji";
+  }
+
+  body {
+    background: var(--color-background);
+    color: var(--color-text);
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  a {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+
+  h1 {
+    font-size: 26px;
+    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 8px 0 10px;
+  }
+
+  h2 {
+    font-size: 18px;
+    line-height: 1.25;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    margin: 10px 0 8px;
+  }
+
+  /* Make default tables look like a modern app */
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  th {
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-muted-text);
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface-2);
+  }
+
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-border);
+  }
+}
+
+
+
+
+
+/*TYPOGRAPHY*/
+
+
+@layer base {
+  html {
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+      "Apple Color Emoji", "Segoe UI Emoji";
+  }
+
+  body {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  a {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+
+  h1 {
+    font-size: 26px;
+    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 8px 0 10px;
+  }
+
+  p {
+    color: var(--color-muted-text);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  th {
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-muted-text);
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface-2);
+  }
+
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-border);
+  }
 }
