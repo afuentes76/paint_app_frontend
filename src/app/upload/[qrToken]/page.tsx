@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 
 import { Card } from "@/ui/components/Card";
@@ -31,12 +31,27 @@ export default function UploadByQrTokenPage() {
   const [task, setTask] = useState<ResolveQrOut | null>(null);
 
   const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
   const [uploading, setUploading] = useState(false);
 
   const [errorFriendly, setErrorFriendly] = useState<string | null>(null);
   const [errorRaw, setErrorRaw] = useState<string | null>(null);
 
   const [success, setSuccess] = useState(false);
+
+  // Create/revoke preview URL
+  useEffect(() => {
+    if (!file) {
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  const taskLabel = useMemo(() => task?.task_name ?? task?.task_id ?? "", [task]);
 
   useEffect(() => {
     if (!qrToken) return;
@@ -80,7 +95,6 @@ export default function UploadByQrTokenPage() {
       const form = new FormData();
       form.append("file", file);
 
-       
       const res = await fetch(`/api/public/tasks/${task.task_id}/image`, {
         method: "POST",
         body: form,
@@ -107,9 +121,7 @@ export default function UploadByQrTokenPage() {
   return (
     <div className="w-full">
       <h1 className="text-xl font-semibold">Upload Image</h1>
-      <p className={cn("mt-1 text-sm", theme.color.mutedText)}>
-        Select an image and upload it.
-      </p>
+      <p className={cn("mt-1 text-sm", theme.color.mutedText)}>Select an image and upload it.</p>
 
       <div className="mt-4">
         <Card>
@@ -126,30 +138,66 @@ export default function UploadByQrTokenPage() {
             ) : null}
 
             {!loading && !errorFriendly && !success ? (
-              <div className="mt-2">
-                <div className={cn("text-sm", theme.color.mutedText)}>
-                  Task: <span className="font-medium">{task?.task_name ?? task?.task_id}</span>
-                </div>
+              <div className="mt-2 space-y-3">
+                
 
-                <div className="mt-3">
+                {/* Controls with proper spacing */}
+
+
+ 
+
+
+
+                
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
                   <input
+                    id="qrUploadFile"
                     type="file"
                     accept="image/*"
+                    className="hidden"
                     onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                   />
-                </div>
 
-                <div className="mt-3">
+                  <label
+                    htmlFor="qrUploadFile"
+                    className={cn(
+                      "inline-flex h-9 items-center justify-center rounded-md border px-3 text-sm cursor-pointer select-none",
+                      theme.color.border
+                    )}
+                  >
+                    Choose Image
+                  </label>
+
+                    <br></br>
                   <Button variant="primary" disabled={!file || uploading} onClick={doUpload}>
                     {uploading ? "Uploading..." : "Upload"}
                   </Button>
                 </div>
+
+                {/* Preview */}
+                {previewUrl ? (
+                  <div className="pt-1">
+                    <div className={cn("mb-2 text-xs", theme.color.mutedText)}>{file?.name}</div>
+                    <img
+                      src={previewUrl}
+                      alt="Selected"
+                      className={cn("max-w-full rounded-md border", theme.color.border)}
+                    />
+                  </div>
+                ) : null}
               </div>
             ) : null}
 
             {success ? (
-              <div className="mt-2">
+              <div className="mt-2 space-y-2">
                 <div className="text-sm">Uploaded successfully. You can close this page.</div>
+                {previewUrl ? (
+                  <img
+                    src={previewUrl}
+                    alt="Uploaded"
+                    className={cn("max-w-full rounded-md border", theme.color.border)}
+                  />
+                ) : null}
               </div>
             ) : null}
           </div>

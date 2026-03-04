@@ -15,7 +15,8 @@ export function Button({
 }: ButtonProps) {
   const base = cn(
     "inline-flex items-center justify-center gap-2",
-    "h-10 px-4 text-sm font-medium",
+    // Global button sizing (requested)
+    "h-12 px-5 text-sm font-semibold",
     "select-none whitespace-nowrap",
     theme.radius.md,
     theme.focus.base,

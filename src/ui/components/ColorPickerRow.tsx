@@ -40,8 +40,8 @@ type Props = {
   paintText?: string;
 
   onDraftColorChange: (next: string | null) => void;
-  onApply: () => void;
-  onReset: () => void;
+  onApply?: () => void;
+  onReset?: () => void;
 
   compact?: boolean;
 
@@ -104,35 +104,9 @@ export function ColorPickerRow(props: Props) {
       type="color"
       value={toSafeHexForColorInput(hexText)}
       onChange={(e) => handleColorPicker(e.target.value)}
-      className="h-7 w-10 rounded border p-0"
+      className="h-9 w-10 rounded border-0 p-0"
       title="Pick color"
     />
-  );
-
-  const actionsEl = (
-    <div className="flex items-center justify-end gap-2">
-      {/* Apply (only when live preview off) — existing behavior */}
-      {!livePreview ? (
-        <Button
-          onClick={onApply}
-          disabled={!normalizeHexLocal(hexText || "")}
-          title="Apply"
-          className="h-7 w-7 px-0 text-xs"
-        >
-          ⟳
-        </Button>
-      ) : null}
-
-      {/* Reset — always */}
-      <Button
-        onClick={onReset}
-        variant="secondary"
-        title="Reset"
-        className="h-7 w-7 px-0 text-xs"
-      >
-        ↺
-      </Button>
-    </div>
   );
 
   // ✅ NEW TABLE ROW RENDER (ONLY VISUAL STRUCTURE CHANGES)
@@ -140,8 +114,8 @@ export function ColorPickerRow(props: Props) {
     return (
       <TR>
         {/* 1) Mask name */}
-        <TD className="min-w-0">
-          <div className="text-sm font-medium">
+        <TD className="min-w-0 overflow-hidden">
+          <div className="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">
             {title}
             {/*
               appliedBadge ? (
@@ -151,18 +125,33 @@ export function ColorPickerRow(props: Props) {
           </div>
         </TD>
 
-        {/* 2) Palette */}
+        {/* 2) Controls */}
         <TD>
-          <div className="flex justify-end">{paintPickerEl}</div>
+          <div className="flex justify-end gap-1 items-center">
+            {paintPickerEl}
+            {customPickerEl}
+            {/* Apply (only when live preview off) */}
+            {!livePreview ? (
+              <Button
+                onClick={onApply}
+                disabled={!normalizeHexLocal(hexText || "")}
+                title="Apply"
+                className="h-7 w-7 px-0 text-xs"
+              >
+                ⟳
+              </Button>
+            ) : null}
+            {/* Reset */}
+            <Button
+              onClick={onReset}
+              variant="secondary"
+              title="Reset"
+              className="h-7 w-7 px-0 text-xs"
+            >
+              ↺
+            </Button>
+          </div>
         </TD>
-
-        {/* 3) Custom */}
-        <TD>
-          <div className="flex justify-end">{customPickerEl}</div>
-        </TD>
-
-        {/* 4) Update + Reset */}
-        <TD className="text-right">{actionsEl}</TD>
       </TR>
     );
   }
@@ -174,7 +163,7 @@ export function ColorPickerRow(props: Props) {
         <div className="grid grid-cols-[minmax(0,1fr)_140px_44px_30px_30px] items-center gap-2">
           {/* Mask name */}
           <div className="min-w-0">
-            <div className="truncate text-sm font-medium">
+            <div className="truncate text-sm font-medium whitespace-nowrap">
               {title}
               {/*
               appliedBadge ? (
@@ -225,7 +214,7 @@ export function ColorPickerRow(props: Props) {
     <div className="rounded border p-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="text-sm font-medium">
+          <div className="text-sm font-medium whitespace-nowrap">
             {title}
             {/*
             appliedBadge ? (
@@ -260,7 +249,7 @@ export function ColorPickerRow(props: Props) {
               type="color"
               value={toSafeHexForColorInput(hexText)}
               onChange={(e) => handleColorPicker(e.target.value)}
-              className="h-9 w-14 rounded border p-0"
+              className="h-9 w-14 rounded border-0 p-0"
             />
             <div className="text-sm text-neutral-700">{normalizeHexLocal(hexText || "") || "—"}</div>
           </div>

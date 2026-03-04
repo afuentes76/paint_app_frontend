@@ -16,19 +16,19 @@
   --color-text: #0f172a; /* near-black slate */
   --color-muted-text: #475569; /* muted slate */
 
-  /* “Semantic” tokens (still gray-only per requirement) */
-  --color-primary: #0f172a; /* same as text (no color accents) */
-  --color-success: #0f172a;
-  --color-warning: #0f172a;
-  --color-danger: #0f172a;
+  /* “Semantic” tokens (vivid primary requested) */
+  --color-primary: #2474f5; /* rgb(36,116,245) */
+  --color-success: #16a34a;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
 
   /* Rings / focus */
-  --color-ring: #94a3b8; /* slate-400 */
+  --color-ring: rgba(36, 116, 245, 0.45);
 
   /* Radii */
   --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 18px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
 
   /* Shadows */
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 300; // 5 minutes
 
 const BACKEND_BASE = (process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000").replace(/\/+$/, "");
 
@@ -20,20 +19,14 @@ function forwardHeaders(req: NextRequest) {
 
 export async function POST(req: NextRequest, ctx: { params: { taskId: string } }) {
   const { taskId } = ctx.params;
+  if (!taskId) return NextResponse.json({ detail: "Missing taskId" }, { status: 400 });
 
-  if (!taskId) {
-    return NextResponse.json({ detail: "Missing taskId" }, { status: 400 });
-  }
-
-  const target = `${BACKEND_BASE}/tasks/${taskId}/repaint`;
-
-  // Pass-through body unchanged
+  const target = `${BACKEND_BASE}/tasks/${taskId}/repaint/start`;
   const bodyText = await req.text();
 
   try {
-    // Hard timeout so *we* control abort instead of getting random ECONNRESET
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+    const timeout = setTimeout(() => controller.abort(), 30_000);
 
     const res = await fetch(target, {
       method: "POST",
@@ -46,7 +39,6 @@ export async function POST(req: NextRequest, ctx: { params: { taskId: string } }
     clearTimeout(timeout);
 
     const text = await res.text().catch(() => "");
-
     return new NextResponse(text, {
       status: res.status,
       headers: {
@@ -55,13 +47,9 @@ export async function POST(req: NextRequest, ctx: { params: { taskId: string } }
       },
     });
   } catch (err: any) {
-    // THIS is the error you’re seeing (ECONNRESET / socket hang up)
-    console.error("AI repaint proxy error:", err?.stack || err);
-
-    // If backend completed but this proxy died, UI will still show “failed”
-    // until refresh. This prevents a crash-loop and gives a clear message.
+    console.error("AI repaint start proxy error:", err?.stack || err);
     return NextResponse.json(
-      { detail: "AI repaint proxy failed", error: String(err?.code || err?.message || err) },
+      { detail: "AI repaint start proxy failed", error: String(err?.code || err?.message || err) },
       { status: 500 }
     );
   }

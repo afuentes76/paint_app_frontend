@@ -447,71 +447,112 @@ export default function PreviewPage() {
         throw new Error("Pick at least one color before repaint.");
       }
 
-      const res = await fetchWithAuth(`/api/tasks/${taskId}/repaint`, {
+      const startRes = await fetchWithAuth(`/api/tasks/${taskId}/repaint/start`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ items }),
       });
 
-      const text = await res.text().catch(() => "");
+      const startText = await startRes.text().catch(() => "");
 
-      if (!res.ok) {
-        // Do NOT throw -> prevents Next.js red overlay
+      if (!startRes.ok) {
         let parsed: unknown = null;
         try {
-            parsed = text ? JSON.parse(text) : null;
+          parsed = startText ? JSON.parse(startText) : null;
         } catch {
-            parsed = null;
+          parsed = null;
         }
-
-        console.log("Repaint error response:", { text, parsed });
 
         let friendly = "Repaint failed";
         if (parsed && typeof parsed === "object") {
-          // Try "detail" first (FastAPI default)
           if ("detail" in parsed) {
             const detail = (parsed as { detail: unknown }).detail;
-            if (typeof detail === "string" && detail) {
-              friendly = detail;
-            }
-          }
-          // Try "message" as fallback (some APIs use this)
-          else if ("message" in parsed) {
+            if (typeof detail === "string" && detail) friendly = detail;
+          } else if ("message" in parsed) {
             const message = (parsed as { message: unknown }).message;
-            if (typeof message === "string" && message) {
-              friendly = message;
-            }
+            if (typeof message === "string" && message) friendly = message;
+          } else if ("error" in parsed) {
+            const error = (parsed as { error: unknown }).error;
+            if (typeof error === "string" && error) friendly = error;
           }
         }
-        if (!friendly && typeof text === "string" && text) {
-          friendly = text;
-        }
-
-        const details =
-            parsed && typeof parsed === "object"
-            ? JSON.stringify(parsed, null, 2)
-            : (text || `HTTP ${res.status}`);
 
         setErrorFriendly(friendly);
-        setErrorRaw(details);
-        return; // <-- critical: stop here, no exception
-      }
-      
-      let json: { final_legend_image_url?: string } = {};
-      try {
-        json = text ? JSON.parse(text) : {};
-      } catch {
-        json = {};
+        setErrorRaw(
+          parsed && typeof parsed === "object" ? JSON.stringify(parsed, null, 2) : (startText || `HTTP ${startRes.status}`)
+        );
+        return;
       }
 
-      // backend returns { repaint_run_id, final_legend_image_url }
-      const url = json.final_legend_image_url || null;
-      if (url) {
-        setRepaintUrl(url);
-        setRepaintMsg("AI repaint started.");
-      } else {
-        setRepaintMsg("AI repaint started (no URL returned).");
+      let startJson: { repaint_run_id?: string; message?: string } = {};
+      try {
+        startJson = startText ? JSON.parse(startText) : {};
+      } catch {
+        startJson = {};
       }
+
+      const runId = startJson.repaint_run_id;
+      if (!runId) {
+        setErrorFriendly("AI repaint failed");
+        setErrorRaw("Missing repaint_run_id from server");
+        return;
+      }
+
+      setRepaintMsg(startJson.message || "AI repaint started.");
+
+      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+      const startedAt = Date.now();
+      const maxMs = 20 * 60 * 1000;
+
+      while (Date.now() - startedAt < maxMs) {
+        await sleep(2000);
+
+        const stRes = await fetchWithAuth(`/api/tasks/${taskId}/repaint/status/${encodeURIComponent(runId)}`, {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        const stText = await stRes.text().catch(() => "");
+        if (!stRes.ok) {
+          if (stRes.status === 404) {
+            setErrorFriendly("AI repaint failed");
+            setErrorRaw("Repaint run not found (404)");
+            return;
+          }
+          continue;
+        }
+
+        let stJson: {
+          status?: string;
+          message?: string;
+          final_legend_image_url?: string | null;
+          replicate_status?: string | null;
+        } = {};
+        try {
+          stJson = stText ? JSON.parse(stText) : {};
+        } catch {
+          stJson = {};
+        }
+
+        const st = (stJson.status || "").toLowerCase();
+        const msg = stJson.message || (stJson.replicate_status ? `Replicate: ${stJson.replicate_status}` : null);
+        if (msg) setRepaintMsg(msg);
+
+        if (st === "succeeded" || st === "success" || st === "done") {
+          const url = stJson.final_legend_image_url || null;
+          if (url) setRepaintUrl(url);
+          return;
+        }
+
+        if (st === "failed" || st === "error" || st === "canceled" || st === "cancelled") {
+          setErrorFriendly(stJson.message || "AI repaint failed");
+          setErrorRaw(stText || "failed");
+          return;
+        }
+      }
+
+      setErrorFriendly("AI repaint still running");
+      setErrorRaw("Polling timed out in UI (backend may still complete). Refresh to see saved result.");
     } catch (e: unknown) {
       console.error(e);
       setRepaintMsg(null);

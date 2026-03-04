@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { cn, theme } from "@/ui/theme";
-import { getRole, isAuthenticated, logout } from "@/lib/auth";
+import { getAuthEventName, getEmail, getRole, isAuthenticated, logout } from "@/lib/auth";
 import { Button } from "@/ui/components/Button";
 import { ErrorBanner } from "@/ui/components/ErrorBanner";
 import { AdminNavBar } from "@/ui/components/AdminNavBar";
@@ -39,6 +39,9 @@ export function AppShell({ appName, children }: AppShellProps) {
   const pathname = usePathname();
   const [flash, setFlash] = useState<string | null>(null);
 
+  // Auth/marketing routes should feel like a landing page (no heavy header, no constrained container).
+  const isAuthRoute = pathname === "/login" || pathname === "/register";
+
   // ✅ NEW: client-only auth state (prevents hydration mismatch)
   const [auth, setAuth] = useState<{ authed: boolean; role: string | null; email: string | null }>({
     authed: false,
@@ -55,15 +58,40 @@ export function AppShell({ appName, children }: AppShellProps) {
     }
   }, []);
 
-  // ✅ NEW: read auth snapshot only AFTER mount
-  useEffect(() => {
+  // ✅ Auth snapshot reader (runs after mount + whenever auth changes)
+  const refreshAuth = () => {
     const authed = isAuthenticated();
     const role = getRole();
-    const email = safeGetLS("email"); // optional if login flow stored it
+    const email = getEmail();
     setAuth({ authed, role, email });
+  };
+
+  useEffect(() => {
+    refreshAuth();
+
+    const evt = getAuthEventName();
+    const onAuth = () => refreshAuth();
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "auth_changed_at" || e.key === "jwt" || e.key === "role" || e.key === "email") {
+        refreshAuth();
+      }
+    };
+
+    window.addEventListener(evt, onAuth);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener(evt, onAuth);
+      window.removeEventListener("storage", onStorage);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const authed = auth.authed;
+  // Also refresh on route changes (covers cases where auth was set before navigation)
+  useEffect(() => {
+    refreshAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
+const authed = auth.authed;
   const role = auth.role;
   const email = auth.email;
   const isAdmin = role === "ADMIN";
@@ -73,24 +101,39 @@ export function AppShell({ appName, children }: AppShellProps) {
 
   return (
     <div className={cn("min-h-screen", theme.color.background, theme.color.text)}>
-      <header className={cn("border-b", theme.color.border, theme.color.surface)}>
-        <div className={cn("mx-auto flex h-14 items-center justify-between px-4", theme.container.max)}>
-          <div className="flex items-center gap-3">
-            <div
-              className={cn("h-9 w-9 border", theme.color.border, theme.radius.md, theme.color.surface2)}
-              aria-hidden="true"
+      <header
+        className={cn(
+          "sticky top-0 z-40 border-b",
+          theme.color.border,
+          theme.color.surface,
+          isAuthRoute ? "bg-white/70 backdrop-blur" : null
+        )}
+      >
+        <div
+          className={cn(
+            "mx-auto flex items-center justify-between px-4",
+            isAuthRoute ? "py-2" : "py-3",
+            theme.container.max
+          )}
+        >
+          <Link href="/tasks" className="flex items-center gap-3" aria-label="Go to Tasks">
+            <img
+              src="/logo-placeholder.svg"
+              alt="Logo"
+              className={cn(isAuthRoute ? "h-10 w-auto" : "h-[100px] w-auto", theme.radius.md)}
+              draggable={false}
             />
             <div className="leading-tight">
               <div className="text-sm font-semibold">{appName}</div>
               <div className={cn("text-xs", theme.color.mutedText)}>Light theme baseline</div>
             </div>
-          </div>
+          </Link>
 
           <div className="flex items-center gap-3">
             {authed ? (
               <div className={cn("text-xs", theme.color.mutedText)}>
-                Signed in as: {role ?? "USER"}
-                {email ? <span className="ml-2">({email})</span> : null}
+                Signed in as: {email ?? "User"}
+                {role ? <span className="ml-2">({role})</span> : null}
               </div>
             ) : (
               <div className={cn("text-xs", theme.color.mutedText)}>Not signed in</div>
@@ -130,11 +173,11 @@ export function AppShell({ appName, children }: AppShellProps) {
             </div>
           </div>
         ) : null}
+
+        {!isAuthRoute && isAdmin ? <AdminNavBar /> : null}
       </header>
 
-      {isAdmin && <AdminNavBar />}
-
-      <main className={cn("mx-auto px-4 py-6", theme.container.max)}>
+      <main className={cn(isAuthRoute ? "w-full p-0" : cn("mx-auto px-4 py-6", theme.container.max))}>
         {flash ? (
           <div className="mb-4">
             <ErrorBanner title="Success" message={flash} />

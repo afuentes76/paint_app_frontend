@@ -10,7 +10,7 @@ export function Card({ className, children }: CardProps) {
   return (
     <div
       className={cn(
-        "border",
+        "border ",
         theme.color.border,
         theme.color.surface,
         theme.radius.lg,

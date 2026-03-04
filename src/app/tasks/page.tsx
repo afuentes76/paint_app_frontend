@@ -354,7 +354,7 @@ export default function TasksPage() {
             ) : (
               <>
                 {/* Toolbar */}
-                <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between  ml-[10px]">
                   <div className="flex items-center gap-2">
                     <Button variant="danger" disabled={selectedCount === 0 || bulkDeleting} onClick={handleBulkDelete}>
                       {bulkDeleting ? "Deleting..." : `Delete selected (${selectedCount})`}

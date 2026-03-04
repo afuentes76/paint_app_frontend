@@ -142,7 +142,8 @@ export default function TaskQrPage() {
           <div>
             <div className="text-lg font-semibold">Upload Image</div>
             <div className="text-sm opacity-70">
-              Scan this QR code on your phone to upload the image.
+              Scan this QR code on your phone to upload the image.This page will auto-advance once upload is detected.
+                  
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -159,24 +160,17 @@ export default function TaskQrPage() {
         {uiLoading && <Loading label="Loading task…" />}
 
         {!uiLoading && task && (
-          <Card className="p-4">
-            <div className="mb-2 text-sm">
-              Status: <span className="font-mono">{task.status}</span>
-            </div>
+          <div className="flex min-h-[60vh] items-center justify-center">
+  
 
+          <Card className="p-4 flex flex-col items-center gap-4 w-[25%]">
+            
             {uploadUrl ? (
               <div className="flex items-start gap-6">
                 <div className="bg-white p-3 rounded">
-                  <QRCode value={uploadUrl} size={200} />
+                  <QRCode value={uploadUrl} size={400} />
                 </div>
-                <div className="text-sm">
-                   
-                  <div className="font-semibold mb-1">Upload URL:</div>
-                  <div className="font-mono break-all">{uploadUrl}</div>
-                  <div className="mt-2 opacity-70">
-                    This page will auto-advance once upload is detected.
-                  </div>
-                </div>
+              
               </div>
             ) : (
               <div className="text-sm opacity-70">
@@ -184,6 +178,7 @@ export default function TaskQrPage() {
               </div>
             )}
           </Card>
+          </div>
         )}
       </div>
     </Protected>
