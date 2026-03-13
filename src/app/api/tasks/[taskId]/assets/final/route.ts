@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_BASE = (process.env.BACKEND_URL || "http://127.0.0.1:8000").replace(/\/+$/, "");
 
-export async function GET(req: NextRequest, ctx: { params: { taskId: string } }) {
-  const { taskId } = ctx.params;
+export async function GET(
+  req: NextRequest,
+  ctx: { params: Promise<{ taskId: string }> }
+) {
+  const { taskId } = await ctx.params;
 
   if (!taskId) {
     return NextResponse.json({ detail: "Missing taskId" }, { status: 400 });
