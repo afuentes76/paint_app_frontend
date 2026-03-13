@@ -1,18 +1,20 @@
 import type { NextConfig } from "next";
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+
 const nextConfig: NextConfig = {
+  output: "standalone",
+
   async rewrites() {
     return [
-      // 1) FIX: map this special frontend endpoint to the backend public endpoint
       {
         source: "/api/tasks/public/qr/:qrToken",
-        destination: "http://127.0.0.1:8000/public/qr/:qrToken",
+        destination: `${API_BASE_URL}/public/qr/:qrToken`,
       },
-
-      // 2) Keep your existing catch-all
       {
         source: "/api/:path*",
-        destination: "http://127.0.0.1:8000/:path*",
+        destination: `${API_BASE_URL}/:path*`,
       },
     ];
   },
