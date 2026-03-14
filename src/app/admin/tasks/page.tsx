@@ -180,7 +180,7 @@ export default function AdminTasksPage() {
                         className={cn(
                           "h-9 rounded-md border px-2 text-sm",
                           theme.color.border,
-                          theme.color.bg,
+                          theme.color.background,
                           theme.color.text
                         )}
                         value={pageSize}
@@ -242,7 +242,7 @@ export default function AdminTasksPage() {
                         const owner = ownerId ? userById.get(ownerId) : null;
 
                         return (
-                          <TR key={t.task_id} className="align-middle">
+                          <TR key={t.task_id}  >
                             <TD>{t.name ?? t.task_id}</TD>
                             <TD>{t.status ?? "—"}</TD>
                             <TD>{t.processing_type ?? "—"}</TD>

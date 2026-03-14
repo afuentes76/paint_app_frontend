@@ -289,7 +289,7 @@ export default function AdminMaskCatalogPage() {
                         className={cn(
                           "h-9 rounded-md border px-2 text-sm",
                           theme.color.border,
-                          theme.color.bg,
+                          theme.color.background,
                           theme.color.text
                         )}
                         value={pageSize}
@@ -351,7 +351,7 @@ export default function AdminMaskCatalogPage() {
                       </TR>
                     ) : (
                       pageRows.map((m) => (
-                        <TR key={idOrKey(m)} className="align-middle">
+                        <TR key={idOrKey(m)}  >
                           <TD>{m.key}</TD>
                           <TD>{m.display_name}</TD>
                           <TD>{m.processing_type}</TD>

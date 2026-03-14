@@ -382,7 +382,7 @@ export default function TasksPage() {
                         className={cn(
                           "h-9 rounded-md border px-2 text-sm",
                           theme.color.border,
-                          theme.color.bg,
+                          theme.color.background,
                           theme.color.text
                         )}
                         value={pageSize}

@@ -192,7 +192,7 @@ export default function AdminUsersPage() {
                         className={cn(
                           "h-9 rounded-md border px-2 text-sm",
                           theme.color.border,
-                          theme.color.bg,
+                          theme.color.background,
                           theme.color.text
                         )}
                         value={pageSize}
@@ -252,7 +252,7 @@ export default function AdminUsersPage() {
                       pageRows.map((u) => {
                         const st = rowState[u.user_id];
                         return (
-                          <TR key={u.user_id} className="align-middle">
+                          <TR key={u.user_id} >
                             <TD>{u.email}</TD>
                             <TD>{u.role ?? "USER"}</TD>
                             <TD>
