@@ -11,14 +11,16 @@ function forwardHeaders(req: NextRequest) {
   const auth = req.headers.get("authorization");
   if (auth) h.set("authorization", auth);
 
-  // force JSON content-type so FastAPI parsing is consistent
   h.set("content-type", "application/json");
 
   return h;
 }
 
-export async function POST(req: NextRequest, ctx: { params: { taskId: string } }) {
-  const { taskId } = ctx.params;
+export async function POST(
+  req: NextRequest,
+  ctx: { params: Promise<{ taskId: string }> }
+) {
+  const { taskId } = await ctx.params;
   if (!taskId) return NextResponse.json({ detail: "Missing taskId" }, { status: 400 });
 
   const target = `${BACKEND_BASE}/tasks/${taskId}/repaint/start`;
@@ -46,11 +48,8 @@ export async function POST(req: NextRequest, ctx: { params: { taskId: string } }
         "cache-control": "no-store",
       },
     });
-  } catch (err: any) {
-    console.error("AI repaint start proxy error:", err?.stack || err);
-    return NextResponse.json(
-      { detail: "AI repaint start proxy failed", error: String(err?.code || err?.message || err) },
-      { status: 500 }
-    );
+  } catch (err) {
+    console.error("Repaint start proxy error:", err);
+    return NextResponse.json({ detail: "Repaint start proxy failed" }, { status: 500 });
   }
 }

@@ -11,8 +11,11 @@ function forwardHeaders(req: NextRequest) {
   return h;
 }
 
-export async function GET(req: NextRequest, ctx: { params: { taskId: string } }) {
-  const { taskId } = ctx.params;
+export async function GET(
+  req: NextRequest,
+  ctx: { params: Promise<{ taskId: string }> }
+) {
+  const { taskId } = await ctx.params;
   const target = `${BACKEND_BASE}/tasks/${taskId}/masks`;
 
   const res = await fetch(target, {

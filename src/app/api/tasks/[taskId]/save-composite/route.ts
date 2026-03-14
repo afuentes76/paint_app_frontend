@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_BASE = (process.env.BACKEND_URL || "http://127.0.0.1:8000").replace(/\/+$/, "");
 
-export async function POST(req: NextRequest, ctx: { params: { taskId: string } }) {
-  const { taskId } = ctx.params;
+export async function POST(
+  req: NextRequest,
+  ctx: { params: Promise<{ taskId: string }> }
+) {
+  const { taskId } = await ctx.params;
 
   if (!taskId) {
     return NextResponse.json({ detail: "Missing taskId" }, { status: 400 });
@@ -15,7 +18,6 @@ export async function POST(req: NextRequest, ctx: { params: { taskId: string } }
   const auth = req.headers.get("authorization");
   if (auth) headers.set("authorization", auth);
 
-  // Pass through multipart form-data as-is (do NOT set content-type manually)
   try {
     const body = await req.arrayBuffer();
     const ct = req.headers.get("content-type");
@@ -32,7 +34,6 @@ export async function POST(req: NextRequest, ctx: { params: { taskId: string } }
       return new NextResponse(text || "Save failed", { status: res.status });
     }
 
-    // backend returns JSON
     return new NextResponse(text, {
       status: 200,
       headers: { "content-type": "application/json" },

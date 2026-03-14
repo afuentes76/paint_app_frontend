@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 300; // 5 minutes
+export const maxDuration = 300;
 
 const BACKEND_BASE = (process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000").replace(/\/+$/, "");
 
@@ -12,26 +12,25 @@ function forwardHeaders(req: NextRequest) {
   const auth = req.headers.get("authorization");
   if (auth) h.set("authorization", auth);
 
-  // force JSON content-type so FastAPI parsing is consistent
   h.set("content-type", "application/json");
 
   return h;
 }
 
-export async function POST(req: NextRequest, ctx: { params: { taskId: string } }) {
-  const { taskId } = ctx.params;
+export async function POST(
+  req: NextRequest,
+  ctx: { params: Promise<{ taskId: string }> }
+) {
+  const { taskId } = await ctx.params;
 
   if (!taskId) {
     return NextResponse.json({ detail: "Missing taskId" }, { status: 400 });
   }
 
   const target = `${BACKEND_BASE}/tasks/${taskId}/repaint`;
-
-  // Pass-through body unchanged
   const bodyText = await req.text();
 
   try {
-    // Hard timeout so *we* control abort instead of getting random ECONNRESET
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5 * 60 * 1000);
 
@@ -54,15 +53,8 @@ export async function POST(req: NextRequest, ctx: { params: { taskId: string } }
         "cache-control": "no-store",
       },
     });
-  } catch (err: any) {
-    // THIS is the error you’re seeing (ECONNRESET / socket hang up)
-    console.error("AI repaint proxy error:", err?.stack || err);
-
-    // If backend completed but this proxy died, UI will still show “failed”
-    // until refresh. This prevents a crash-loop and gives a clear message.
-    return NextResponse.json(
-      { detail: "AI repaint proxy failed", error: String(err?.code || err?.message || err) },
-      { status: 500 }
-    );
+  } catch (err) {
+    console.error("Repaint proxy error:", err);
+    return NextResponse.json({ detail: "Repaint proxy failed" }, { status: 500 });
   }
 }

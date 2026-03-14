@@ -6,9 +6,12 @@ const BACKEND_BASE = (
   "http://127.0.0.1:8000"
 ).replace(/\/+$/, "");
 
-export async function GET(req: NextRequest, ctx: { params: { qrToken: string } }) {
-  const { qrToken } = ctx.params;
-   // Backend public route is: GET /public/qr/{qrToken}
+export async function GET(
+  req: NextRequest,
+  ctx: { params: Promise<{ qrToken: string }> }
+) {
+  const { qrToken } = await ctx.params;
+
   const target = `${BACKEND_BASE}/public/qr/${encodeURIComponent(qrToken)}`;
 
   const res = await fetch(target, {

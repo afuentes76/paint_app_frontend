@@ -16,11 +16,11 @@ function forwardHeaders(req: NextRequest) {
 
 export async function PATCH(
   req: NextRequest,
-  ctx: { params: { taskId: string; taskMaskId: string } }
+  ctx: { params: Promise<{ taskId: string; maskKey: string }> }
 ) {
-  const { taskId, taskMaskId } = ctx.params;
+  const { taskId, maskKey } = await ctx.params;
 
-  const target = `${BACKEND_BASE}/tasks/${taskId}/masks/${taskMaskId}/paint-color`;
+  const target = `${BACKEND_BASE}/tasks/${taskId}/masks/${maskKey}/paint-color`;
   const body = await req.text();
 
   const res = await fetch(target, {

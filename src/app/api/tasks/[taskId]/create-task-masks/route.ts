@@ -16,10 +16,13 @@ function forwardHeaders(req: NextRequest) {
   return h;
 }
 
-export async function POST(req: NextRequest, ctx: { params: { taskId: string } }) {
-  const { taskId } = ctx.params;
+export async function POST(
+  req: NextRequest,
+  ctx: { params: Promise<{ taskId: string }> }
+) {
+  const { taskId } = await ctx.params;
 
-  const body = await req.text(); // pass-through (json)
+  const body = await req.text();
   const target = `${BACKEND_BASE}/tasks/${taskId}/create-task-masks`;
 
   const res = await fetch(target, {

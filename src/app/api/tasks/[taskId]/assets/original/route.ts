@@ -4,9 +4,9 @@ const BACKEND_BASE = (process.env.BACKEND_URL || "http://127.0.0.1:8000").replac
 
 export async function GET(
   req: NextRequest,
-  ctx: { params: { taskId: string } }
+  ctx: { params: Promise<{ taskId: string }> }
 ) {
-  const { taskId } = ctx.params;
+  const { taskId } = await ctx.params;
 
   if (!taskId) {
     return NextResponse.json({ detail: "Missing taskId" }, { status: 400 });
@@ -14,7 +14,6 @@ export async function GET(
 
   const target = `${BACKEND_BASE}/tasks/${taskId}/assets/original`;
 
-  // Forward Authorization header
   const headers = new Headers();
   const auth = req.headers.get("authorization");
   if (auth) headers.set("authorization", auth);
@@ -23,7 +22,6 @@ export async function GET(
     const res = await fetch(target, {
       method: "GET",
       headers,
-      // IMPORTANT: do not cache binary assets
       cache: "no-store",
     });
 
@@ -34,7 +32,6 @@ export async function GET(
       });
     }
 
-    // Stream the binary response back to the browser
     return new NextResponse(res.body, {
       status: 200,
       headers: {
@@ -43,10 +40,7 @@ export async function GET(
       },
     });
   } catch (err) {
-    console.error("Image proxy error:", err);
-    return NextResponse.json(
-      { detail: "Image proxy failed" },
-      { status: 500 }
-    );
+    console.error("Original asset proxy error:", err);
+    return NextResponse.json({ detail: "Original asset proxy failed" }, { status: 500 });
   }
 }

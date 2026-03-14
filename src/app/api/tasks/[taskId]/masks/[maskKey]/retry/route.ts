@@ -13,9 +13,9 @@ function forwardHeaders(req: NextRequest) {
 
 export async function POST(
   req: NextRequest,
-  ctx: { params: { taskId: string; maskKey: string } }
+  ctx: { params: Promise<{ taskId: string; maskKey: string }> }
 ) {
-  const { taskId, maskKey } = ctx.params;
+  const { taskId, maskKey } = await ctx.params;
 
   const target = `${BACKEND_BASE}/tasks/${taskId}/masks/${encodeURIComponent(maskKey)}/retry`;
 

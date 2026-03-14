@@ -1,4 +1,3 @@
-// src/app/api/tasks/[taskId]/cancel/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_BASE =
@@ -17,11 +16,13 @@ function forwardHeaders(req: NextRequest) {
   return h;
 }
 
-export async function POST(req: NextRequest, ctx: { params: { taskId: string } }) {
-  const { taskId } = ctx.params;
+export async function POST(
+  req: NextRequest,
+  ctx: { params: Promise<{ taskId: string }> }
+) {
+  const { taskId } = await ctx.params;
 
-  // Cancel processing for this task (mask generation API1/API2)
-  const body = await req.text(); // pass-through (usually empty)
+  const body = await req.text();
   const target = `${BACKEND_BASE}/tasks/${taskId}/cancel`;
 
   const res = await fetch(target, {

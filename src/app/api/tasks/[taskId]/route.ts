@@ -15,8 +15,11 @@ function forwardHeaders(req: NextRequest) {
   return h;
 }
 
-export async function GET(req: NextRequest, ctx: { params: { taskId: string } }) {
-  const { taskId } = ctx.params;
+export async function GET(
+  req: NextRequest,
+  ctx: { params: Promise<{ taskId: string }> }
+) {
+  const { taskId } = await ctx.params;
   const target = `${BACKEND_BASE}/tasks/${taskId}`;
 
   const res = await fetch(target, {
@@ -35,10 +38,12 @@ export async function GET(req: NextRequest, ctx: { params: { taskId: string } })
   });
 }
 
-export async function PATCH(req: NextRequest, ctx: { params: { taskId: string } }) {
-  const { taskId } = ctx.params;
+export async function PATCH(
+  req: NextRequest,
+  ctx: { params: Promise<{ taskId: string }> }
+) {
+  const { taskId } = await ctx.params;
   const target = `${BACKEND_BASE}/tasks/${taskId}`;
-
   const body = await req.text();
 
   const res = await fetch(target, {
