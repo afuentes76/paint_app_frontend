@@ -137,7 +137,7 @@ export default function TaskQrPage() {
 
   return (
     <Protected roles={["USER", "ADMIN"]}>
-      <div className={cn("p-6", theme.pageBg)}>
+      <div className={cn("p-6", theme.color.background)}>
         <div className="flex items-center justify-between mb-4">
           <div>
             <div className="text-lg font-semibold">Upload Image</div>
