@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 
 import Protected from "@/components/Protected";
@@ -20,7 +20,7 @@ import {
   fetchAsImageBitmap,
   normalizeHex,
 } from "@/lib/canvasComposite";
-import { loadPreviewState, savePreviewState, type PreviewLayerState } from "@/lib/localPreviewState";
+import {   savePreviewState, type PreviewLayerState } from "@/lib/localPreviewState";
 import type { PaintSearchHit } from "@/ui/components/PaintColorTypeahead";
 
 type TaskDTO = {
@@ -42,7 +42,7 @@ type TaskDTO = {
   image_path?: string | null;
 
   // Additional properties that may be present
-  store_palette_colors?: any;
+  store_palette_colors?: TaskPaletteColor[] | null;
 };
 
 type MaskCatalogItem = {
@@ -79,12 +79,16 @@ type TaskMaskDTO = {
   error_message?: string | null;
 };
 
+type TaskPaletteColor =
+  | string
+  | {
+      id?: string | null;
+      name?: string | null;
+      hex?: string | null;
+    };
+
 // Preview functionality types
-type PaletteColorItem = {
-  id?: string | number;
-  name?: string;
-  hex: string;
-};
+ 
 
 type PaintMeta = {
   brand: string;
@@ -106,39 +110,14 @@ function isRunningStatus(status: string) {
   return s === "API1_RUNNING" || s === "API2_RUNNING";
 }
 
-function toUiStatus(status: string, errorMessage?: string | null) {
-  const s = upper(status);
+ 
 
-  if (s === "COMPLETED" || s === "SUCCEEDED") return "SUCCEEDED";
-  if (s === "PENDING") return "PENDING";
-  if (s === "API1_RUNNING") return "API1_RUNNING";
-  if (s === "API2_RUNNING") return "API2_RUNNING";
-
-  if (s.includes("FAILED")) {
-    const msg = (errorMessage || "").toLowerCase();
-    if (msg.includes("canceled by user") || msg.includes("cancelled by user")) return "CANCELED";
-    return "FAILED";
-  }
-
-  if (s === "CANCELED" || s === "CANCELLED") return "CANCELED";
-  return s || "—";
-}
-
-function taskTypeLabel(t?: string | null) {
-  const s = upper(t);
-  if (s === "INTERIOR") return "Interior";
-  if (s === "EXTERIOR") return "Exterior";
-  return s || "—";
-}
-
+ 
 function stripHash(hex: string) {
   return (hex || "").replace("#", "").trim();
 }
 
-function isCompleted(status: string) {
-  const s = upper(status);
-  return s === "COMPLETED" || s === "SUCCEEDED";
-}
+ 
 
 function imageExistsFromTask(task: TaskDTO | null) {
   if (!task) return false;
@@ -151,17 +130,13 @@ function imageExistsFromTask(task: TaskDTO | null) {
 
   return false;
 }
-
-function getMaskDisplayName(m: MaskCatalogItem) {
-  return m.label || m.display_name || m.name || m.mask_key || "Unnamed mask";
-}
+ 
 
 function getMaskContext(m: MaskCatalogItem) {
   return upper(m.context || m.processing_type || "");
 }
 
 export default function TaskProcessingPage() {
-  const router = useRouter();
   const params = useParams();
 
   const taskId = Array.isArray(params?.taskId) ? params.taskId[0] : (params?.taskId as string | undefined);
@@ -172,14 +147,8 @@ export default function TaskProcessingPage() {
 
   // Task name: avoid “poll stomps my typing”
   const [taskNameDraft, setTaskNameDraft] = useState("");
-  const [isEditingTaskName, setIsEditingTaskName] = useState(false);
   const [isTaskNameDirty, setIsTaskNameDirty] = useState(false);
-  const isEditingTaskNameRef = useRef(false);
   const isTaskNameDirtyRef = useRef(false);
-
-  useEffect(() => {
-    isEditingTaskNameRef.current = isEditingTaskName;
-  }, [isEditingTaskName]);
 
   useEffect(() => {
     isTaskNameDirtyRef.current = isTaskNameDirty;
@@ -193,22 +162,19 @@ export default function TaskProcessingPage() {
   const [errorRaw, setErrorRaw] = useState<string | null>(null);
 
   // ----- Preview state -----
-  const [livePreview, setLivePreview] = useState(true);
+  const livePreview = true;
   const [draftColors, setDraftColors] = useState<Record<string, string | null>>({});
   const [appliedColors, setAppliedColors] = useState<Record<string, string | null>>({});
 
   // ----- Asset caches -----
   const originalBitmapRef = useRef<ImageBitmap | null>(null);
-  const maskBitmapsRef = useRef<Record<string, ImageBitmap>>({});
-  const tintedCanvasesRef = useRef<Record<string, HTMLCanvasElement | string>>({});
-
+   
   const afterCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const beforeImgRef = useRef<HTMLImageElement | null>(null);
   const beforeObjectUrlRef = useRef<string | null>(null);
 
-  const [savedUrl, setSavedUrl] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [saveMsg, setSaveMsg] = useState<string | null>(null);
+   
+   
 
   // repaint output
   const [repaintUrl, setRepaintUrl] = useState<string | null>(null);
@@ -230,7 +196,10 @@ export default function TaskProcessingPage() {
   const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // backend uses processing_type, patch accepts task_type; support both on read
-  const processingType = upper((task as any)?.processing_type ?? (task as any)?.task_type) as "INTERIOR" | "EXTERIOR" | "";
+  const processingType = upper(task?.processing_type ?? task?.task_type) as
+    | "INTERIOR"
+    | "EXTERIOR"
+    | "";
   const imageExists = imageExistsFromTask(task);
 
   // ----- Image preview (via Next proxy route) -----
@@ -380,7 +349,7 @@ export default function TaskProcessingPage() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [taskId, loading, imageExists]);
 
   // ---------------------------
@@ -413,10 +382,7 @@ export default function TaskProcessingPage() {
     ctx.drawImage(original, 0, 0);
   }
 
-  function applyOne(maskKey: string) {
-    setAppliedColors((prev) => ({ ...prev, [maskKey]: draftColors[maskKey] ?? null }));
-  }
-
+   
   async function clearPaintSelection(maskKey: string) {
     setPaintTextByMask((prev) => ({ ...prev, [maskKey]: "" }));
     setPaintMetaByMask((prev) => ({ ...prev, [maskKey]: null }));
@@ -433,55 +399,15 @@ export default function TaskProcessingPage() {
   useEffect(() => {
     if (!livePreview) return;
     setAppliedColors(draftColors);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [livePreview, draftColors]);
 
   useEffect(() => {
     renderComposite();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [appliedColors]);
 
-  // ---------------------------
-  // Save composite
-  // ---------------------------
-  async function onSave() {
-    if (!taskId) return;
-    const canvas = afterCanvasRef.current;
-    if (!canvas) return;
-
-    setSaving(true);
-    setSaveMsg(null);
-
-    try {
-      const blob: Blob = await new Promise((resolve, reject) => {
-        canvas.toBlob((b) => {
-          if (!b) reject(new Error("Failed to export PNG"));
-          else resolve(b);
-        }, "image/png");
-      });
-
-      const fd = new FormData();
-      fd.append("file", blob, "final.png");
-
-      const res = await fetchWithAuth(`/api/tasks/${taskId}/save-composite`, {
-        method: "POST",
-        body: fd,
-      });
-
-      const text = await res.text().catch(() => "");
-      if (!res.ok) throw new Error(text || "Save failed");
-
-      setSaveMsg("Saved successfully");
-      setSavedUrl(`/api/tasks/${taskId}/assets/final`);
-    } catch (e: unknown) {
-      console.error(e);
-      setSaveMsg(null);
-      setErrorFriendly("Save failed");
-      setErrorRaw(e instanceof Error ? e.message : String(e));
-    } finally {
-      setSaving(false);
-    }
-  }
+   
 
   // ---------------------------
   // Load Historical Repaints
@@ -754,25 +680,8 @@ export default function TaskProcessingPage() {
     return taskMasks.some((m) => isRunningStatus(m.status));
   }, [taskMasks]);
 
-  const anySelectedFailedOrCanceled = useMemo(() => {
-    for (const k of visibleSelectedKeys) {
-      const tm = taskMaskByKey.get(k);
-      if (!tm) continue;
-      const ui = toUiStatus(tm.status, tm.error_message);
-      if (ui === "FAILED" || ui === "CANCELED") return true;
-    }
-    return false;
-  }, [visibleSelectedKeys, taskMaskByKey]);
-
-  const allSelectedSucceeded = useMemo(() => {
-    if (visibleSelectedKeys.length === 0) return false;
-    for (const k of visibleSelectedKeys) {
-      const tm = taskMaskByKey.get(k);
-      if (!tm) return false;
-      if (toUiStatus(tm.status, tm.error_message) !== "SUCCEEDED") return false;
-    }
-    return true;
-  }, [visibleSelectedKeys, taskMaskByKey]);
+  
+   
 
   // Auto redirect to preview only when ALL selected succeed and none failed/canceled (LOCKED)
   // REMOVED: No longer redirecting to preview - functionality merged here
@@ -822,7 +731,7 @@ export default function TaskProcessingPage() {
     const [t, masks] = await Promise.all([fetchTaskOnce(), fetchTaskMasksOnce()]);
     setTask(t);
 
-    if (allowStompDraft || (!isEditingTaskNameRef.current && !isTaskNameDirtyRef.current)) {
+    if (allowStompDraft || !isTaskNameDirtyRef.current) {
       setTaskNameDraft(t.name || "");
       setIsTaskNameDirty(false);
     }
@@ -848,7 +757,7 @@ export default function TaskProcessingPage() {
         setTaskNameDraft(t.name || "");
         setIsTaskNameDirty(false);
 
-        const type = upper((t as any)?.processing_type ?? (t as any)?.task_type) || undefined;
+        const type = upper(t.processing_type ?? t.task_type) || undefined;
 
         const cat = await fetchCatalogOnce(type);
         if (cancelled) return;
@@ -903,7 +812,7 @@ export default function TaskProcessingPage() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [processingType, taskId, missingTaskId]);
 
   // 3) Poll ONLY while processing is running
@@ -945,11 +854,9 @@ export default function TaskProcessingPage() {
   const uiErrorRaw = missingTaskId ? "Missing taskId in route params. Expected URL: /tasks/{taskId}" : errorRaw;
 
   const canEditType = !anySelectedRunning;
-  const canEditMaskSelection = !anySelectedRunning;
+   
 
-  const startEnabled = imageExists && visibleSelectedKeys.length > 0 && !anySelectedRunning;
-  const cancelVisible = anySelectedRunning;
-  const retryDisabled = anySelectedRunning;
+   
 
   async function saveTaskName() {
     if (!taskId) return;
@@ -1025,154 +932,10 @@ export default function TaskProcessingPage() {
     }
   }
 
-  function toggleMask(maskKey: string) {
-    if (!canEditMaskSelection) return;
-
-    setSelectedKeys((prev) => {
-      if (prev.includes(maskKey)) return prev.filter((k) => k !== maskKey);
-      return [...prev, maskKey];
-    });
-  }
-
-  async function startProcessing() {
-    if (!taskId) return;
-    if (!startEnabled) return;
-
-    try {
-      saveTaskName();
-      setErrorFriendly(null);
-      setErrorRaw(null);
-
-      // If selected masks are FAILED/CANCELED, retry them instead of create-task-masks
-      if (anySelectedFailedOrCanceled) {
-        // retry only the ones that are failed/canceled
-        for (const k of visibleSelectedKeys) {
-          const tm = taskMaskByKey.get(k);
-          if (!tm) continue;
-          const ui = toUiStatus(tm.status, tm.error_message);
-          if (ui !== "FAILED" && ui !== "CANCELED") continue;
-
-          const res = await fetchWithAuth(
-            `/api/tasks/${taskId}/masks/${encodeURIComponent(k)}/retry`,
-            { method: "POST", cache: "no-store" }
-          );
-
-          if (!res.ok) {
-            const raw = await res.text().catch(() => "");
-            throw new Error(`POST /api/tasks/${taskId}/masks/${k}/retry failed: ${res.status} ${raw}`);
-          }
-        }
-
-        await refreshTaskAndMasks({ allowStompDraft: false });
-        return;
-      }
-
-      // Normal path: create missing masks + start API1
-      const res = await fetchWithAuth(`/api/tasks/${taskId}/create-task-masks`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ mask_keys: visibleSelectedKeys }),
-        cache: "no-store",
-      });
-
-      if (!res.ok) {
-        const raw = await res.text().catch(() => "");
-        throw new Error(`POST /api/tasks/${taskId}/create-task-masks failed: ${res.status} ${raw}`);
-      }
-
-      await refreshTaskAndMasks({ allowStompDraft: false });
-    } catch (err) {
-      console.error(err);
-      setErrorFriendly("Failed to start processing");
-      setErrorRaw(String(err));
-    }
-  }
-  async function cancelProcessing() {
-    if (!taskId) return;
-
-    try {
-      setErrorFriendly(null);
-      setErrorRaw(null);
-
-      const res = await fetchWithAuth(`/api/tasks/${taskId}/cancel`, {
-        method: "POST",
-        cache: "no-store",
-      });
-
-      if (!res.ok) {
-        const raw = await res.text().catch(() => "");
-        throw new Error(`POST /api/tasks/${taskId}/cancel failed: ${res.status} ${raw}`);
-      }
-
-      await refreshTaskAndMasks({ allowStompDraft: false });
-    } catch (err) {
-      console.error(err);
-      setErrorFriendly("Failed to cancel processing");
-      setErrorRaw(String(err));
-    }
-  }
-
-  async function retryMask(maskKey: string) {
-    if (!taskId) return;
-    if (retryDisabled) return;
-
-    try {
-      setErrorFriendly(null);
-      setErrorRaw(null);
-
-      const res = await fetchWithAuth(`/api/tasks/${taskId}/masks/${encodeURIComponent(maskKey)}/retry`, {
-        method: "POST",
-        cache: "no-store",
-      });
-
-      if (!res.ok) {
-        const raw = await res.text().catch(() => "");
-        throw new Error(`POST /api/tasks/${taskId}/masks/${maskKey}/retry failed: ${res.status} ${raw}`);
-      }
-
-      await refreshTaskAndMasks({ allowStompDraft: false });
-    } catch (err) {
-      console.error(err);
-      setErrorFriendly("Failed to retry mask");
-      setErrorRaw(String(err));
-    }
-  }
-
-  const selectedMaskRows = useMemo(() => {
-    const catByKey = new Map(
-      filteredCatalog.filter((c) => !!getCatalogKey(c)).map((c) => [getCatalogKey(c) as string, c])
-    );
-
-    return visibleSelectedKeys
-      .map((k) => {
-        const cat = catByKey.get(k);
-        const tm = taskMaskByKey.get(k);
-        return { key: k, cat, tm };
-      })
-      .filter((x) => !!x.cat);
-  }, [visibleSelectedKeys, filteredCatalog, taskMaskByKey]);
-
-  // Build single-cell lines for processing status (name + status + error + retry)
-  const statusLines = useMemo(() => {
-    return selectedMaskRows.map(({ key, cat, tm }) => {
-      const name = cat ? getMaskDisplayName(cat) : key;
-      const uiStatus = tm ? toUiStatus(tm.status, tm.error_message) : "PENDING";
-      const isFailed = uiStatus === "FAILED";
-      const isCanceled = uiStatus === "CANCELED";
-      const failedStep = tm?.failed_step ?? null;
-      const errMsg = tm?.error_message ?? null;
-
-      return {
-        key,
-        name,
-        uiStatus,
-        isFailed,
-        isCanceled,
-        failedStep,
-        errMsg,
-      };
-    });
-  }, [selectedMaskRows]);
+   
+ 
+  
+  
 
   return (
     <Protected roles={["USER", "ADMIN"]}>
@@ -1415,9 +1178,7 @@ export default function TaskProcessingPage() {
                       Save Changes
                     </Button>
 
-                    {saveMsg ? (
-                      <div className="text-sm text-green-600">{saveMsg}</div>
-                    ) : null}
+                     
 
                     {repaintMsg ? (
                       <div className="text-sm text-blue-600">{repaintMsg}</div>

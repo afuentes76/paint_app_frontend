@@ -1,7 +1,7 @@
 import React from "react";
 import { cn, theme } from "@/ui/theme";
 
-type ButtonVariant = "primary" | "secondary" | "ghost";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
@@ -47,6 +47,13 @@ export function Button({
       "bg-transparent",
       "hover:bg-[var(--color-surface-2)]",
       "active:bg-[var(--color-surface)]"
+    ),
+    danger: cn(
+      theme.color.dangerBg,
+      "text-white",
+      "shadow-sm",
+      "hover:brightness-110",
+      "active:brightness-95"
     ),
   };
 

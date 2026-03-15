@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import QRCode from "react-qr-code";
@@ -60,7 +60,7 @@ export default function TaskQrPage() {
     return appOrigin ? `${appOrigin}/upload/${token}` : "";
   }, [task?.qr_token, task?.qr_url]);
 
-  function statusToNextRoute(status?: string | null) {
+  const statusToNextRoute = useCallback((status?: string | null) => {
     const s = (status || "").toUpperCase();
     if (!taskId) return null;
 
@@ -72,12 +72,10 @@ export default function TaskQrPage() {
     if (s === "READY_FOR_PREVIEW") return `/tasks/${taskId}/preview`;
 
     return null;
-  }
+  }, [taskId]);
 
   useEffect(() => {
-    console.log("taskId from params:", taskId);
-
-    // ✅ No setState here — just stop polling if missing
+    // Stop polling if the dynamic route param is missing.
     if (missingTaskId) return;
 
     let stopped = false;
@@ -125,7 +123,7 @@ export default function TaskQrPage() {
       stopped = true;
       if (timer) clearTimeout(timer);
     };
-  }, [taskId, router, missingTaskId]);
+  }, [taskId, router, missingTaskId, statusToNextRoute]);
 
   // Render-time error message if missing param
   const uiErrorFriendly = missingTaskId ? "Something went wrong" : errorFriendly;
@@ -142,8 +140,8 @@ export default function TaskQrPage() {
           <div>
             <div className="text-lg font-semibold">Upload Image</div>
             <div className="text-sm opacity-70">
-              Scan this QR code on your phone to upload the image.This page will auto-advance once upload is detected.
-                  
+              Scan this QR code on your phone to upload the image. This page will
+              auto-advance once upload is detected.
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -154,30 +152,28 @@ export default function TaskQrPage() {
         </div>
 
         {uiErrorFriendly && (
-          <ErrorBanner title={uiErrorFriendly} details={uiErrorRaw || undefined} />
+          <ErrorBanner
+            title={uiErrorFriendly}
+            message={uiErrorFriendly}
+            details={uiErrorRaw || undefined}
+          />
         )}
 
         {uiLoading && <Loading label="Loading task…" />}
 
         {!uiLoading && task && (
           <div className="flex min-h-[60vh] items-center justify-center">
-  
-
-          <Card className="p-4 flex flex-col items-center gap-4 w-[25%]">
-            
-            {uploadUrl ? (
-              <div className="flex items-start gap-6">
-                <div className="bg-white p-3 rounded">
-                  <QRCode value={uploadUrl} size={400} />
+            <Card className="flex w-[25%] flex-col items-center gap-4 p-4">
+              {uploadUrl ? (
+                <div className="flex items-start gap-6">
+                  <div className="rounded bg-white p-3">
+                    <QRCode value={uploadUrl} size={400} />
+                  </div>
                 </div>
-              
-              </div>
-            ) : (
-              <div className="text-sm opacity-70">
-                QR token not available yet.
-              </div>
-            )}
-          </Card>
+              ) : (
+                <div className="text-sm opacity-70">QR token not available yet.</div>
+              )}
+            </Card>
           </div>
         )}
       </div>

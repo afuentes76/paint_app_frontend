@@ -1,7 +1,7 @@
 // src/app/tasks/page.tsx
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import Protected from "@/components/Protected";
@@ -17,6 +17,14 @@ import { cn, theme } from "@/ui/theme";
 
 import type { TaskDTO } from "@/types/dto.task";
 
+type TaskListItem = TaskDTO & {
+  createdAt?: string | null;
+  created?: string | null;
+  created_on?: string | null;
+  createdOn?: string | null;
+  original_image_local_path?: string | null;
+};
+
 function friendlyErrorFrom(resStatus: number): string {
   if (resStatus === 401 || resStatus === 403) return "Not authorized";
   if (resStatus === 404) return "Endpoint not found";
@@ -24,7 +32,7 @@ function friendlyErrorFrom(resStatus: number): string {
   return "Request failed";
 }
 
-function pickCreatedValue(t: any): string | null {
+function pickCreatedValue(t: TaskListItem): string | null {
   return (
     t?.created_at ??
     t?.createdAt ??
@@ -65,7 +73,7 @@ export default function TasksPage() {
   const [errorFriendly, setErrorFriendly] = useState<string | null>(null);
   const [errorRaw, setErrorRaw] = useState<string | null>(null);
 
-  const [tasks, setTasks] = useState<TaskDTO[]>([]);
+  const [tasks, setTasks] = useState<TaskListItem[]>([]);
 
   // pagination (client-side)
   const [page, setPage] = useState(1);
@@ -95,7 +103,7 @@ export default function TasksPage() {
         return;
       }
 
-      const data = (await res.json()) as TaskDTO[];
+      const data = (await res.json()) as TaskListItem[];
       const list = Array.isArray(data) ? data : [];
       setTasks(list);
 
@@ -103,7 +111,7 @@ export default function TasksPage() {
       setSelected((prev) => {
         const next: Record<string, boolean> = {};
         for (const t of list) {
-          if ((prev as any)[(t as any).task_id]) next[(t as any).task_id] = true;
+          if (prev[t.task_id]) next[t.task_id] = true;
         }
         return next;
       });
@@ -118,7 +126,7 @@ export default function TasksPage() {
 
   useEffect(() => {
     loadTasks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, []);
 
   const rows = useMemo(() => tasks ?? [], [tasks]);
@@ -142,7 +150,7 @@ export default function TasksPage() {
   const selectedIds = useMemo(() => Object.keys(selected).filter((k) => selected[k]), [selected]);
   const selectedCount = selectedIds.length;
 
-  const pageIds = useMemo(() => pageRows.map((t: any) => t.task_id), [pageRows]);
+  const pageIds = useMemo(() => pageRows.map((t) => t.task_id), [pageRows]);
   const pageSelectedCount = useMemo(() => pageIds.filter((id) => selected[id]).length, [pageIds, selected]);
   const allPageSelected = pageIds.length > 0 && pageSelectedCount === pageIds.length;
   const somePageSelected = pageSelectedCount > 0 && pageSelectedCount < pageIds.length;
@@ -188,7 +196,7 @@ export default function TasksPage() {
       });
 
       // update UI
-      setTasks((prev) => prev.filter((t: any) => t.task_id !== taskId));
+      setTasks((prev) => prev.filter((t) => t.task_id !== taskId));
       setSelected((prev) => {
         const next = { ...prev };
         delete next[taskId];
@@ -242,7 +250,7 @@ export default function TasksPage() {
         return next;
       });
 
-      setTasks((prev) => prev.filter((t: any) => !ids.includes(t.task_id) || failedSet.has(t.task_id)));
+      setTasks((prev) => prev.filter((t) => !ids.includes(t.task_id) || failedSet.has(t.task_id)));
 
       setSelected(() => {
         const next: Record<string, boolean> = {};
@@ -272,7 +280,7 @@ export default function TasksPage() {
   useEffect(() => {
     let cancelled = false;
 
-    async function ensureThumb(task: any) {
+    async function ensureThumb(task: TaskListItem) {
       const id = String(task.task_id);
 
       // already have it
@@ -300,7 +308,7 @@ export default function TasksPage() {
     }
 
     (async () => {
-      for (const t of pageRows as any[]) {
+      for (const t of pageRows) {
         await ensureThumb(t);
       }
     })();
@@ -452,7 +460,7 @@ export default function TasksPage() {
                         </td>
                       </TR>
                     ) : (
-                      (pageRows as any[]).map((t) => {
+                      pageRows.map((t) => {
                         const id = String(t.task_id);
                         const created = pickCreatedValue(t);
                         const thumbUrl = thumbs[id];
