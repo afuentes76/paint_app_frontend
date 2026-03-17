@@ -95,6 +95,7 @@ export default function UploadByQrTokenPage() {
       const form = new FormData();
       form.append("file", file);
 
+       
       const res = await fetch(`/api/tasks/${encodeURIComponent(task.task_id)}/image`, {
 
         method: "POST",
