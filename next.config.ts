@@ -10,7 +10,8 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/tasks/public/qr/:qrToken",
-        destination: `${API_BASE_URL}/public/qr/:qrToken`,
+        destination: `${API_BASE_URL}/api/tasks/public/qr/:qrToken`,
+        
       },
       {
         source: "/api/:path*",

@@ -11,7 +11,7 @@ export async function GET(
 ) {
   const { qrToken } = await ctx.params;
 
-  const target = `${BACKEND_BASE}/public/qr/${encodeURIComponent(qrToken)}`;
+  const target = `${BACKEND_BASE}/api/tasks/public/qr/${encodeURIComponent(qrToken)}`;
 
   const res = await fetch(target, {
     method: "GET",
