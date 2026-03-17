@@ -62,3 +62,21 @@ export async function PATCH(
     },
   });
 }
+
+export async function DELETE(
+  req: NextRequest,
+  ctx: { params: Promise<{ taskId: string }> }
+) {
+  const { taskId } = await ctx.params;
+  const target = `${BACKEND_BASE}/tasks/${taskId}`;
+
+  const res = await fetch(target, {
+    method: "DELETE",
+    headers: forwardHeaders(req),
+    cache: "no-store",
+  });
+
+  return new NextResponse(null, {
+    status: res.status,
+  });
+}

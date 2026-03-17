@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect,  useState } from "react";
 import { useParams } from "next/navigation";
 
 import { Card } from "@/ui/components/Card";
@@ -51,7 +51,7 @@ export default function UploadByQrTokenPage() {
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
-  const taskLabel = useMemo(() => task?.task_name ?? task?.task_id ?? "", [task]);
+ 
 
   useEffect(() => {
     if (!qrToken) return;
