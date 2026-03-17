@@ -8,7 +8,7 @@ export async function POST(
 ) {
   const { taskId } = await ctx.params;
 
-  const target = `${BACKEND_BASE}api/public/tasks/${encodeURIComponent(taskId)}/image`;
+  const target = `${BACKEND_BASE}/api/public/tasks/${encodeURIComponent(taskId)}/image`;
   const body = await req.arrayBuffer();
   const ct = req.headers.get("content-type") || "";
 
