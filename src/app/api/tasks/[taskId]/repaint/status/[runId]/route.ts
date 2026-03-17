@@ -4,7 +4,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const BACKEND_BASE =
-  (process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000").replace(/\/+$/, "");
+  (process.env.BACKEND_URL || "http://127.0.0.1:8000").replace(/\/+$/, "");
 
 function forwardHeaders(req: NextRequest) {
   const h = new Headers();
